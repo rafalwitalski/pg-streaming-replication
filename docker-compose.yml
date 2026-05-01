@@ -1,0 +1,54 @@
+services:
+
+  pg-primary:
+    build: .
+    container_name: pg-primary
+    environment:
+      POSTGRES_PASSWORD: "postgres"
+      PGROLE: "primary"
+      PG_REPLICATION_USER: "replicator"
+      PG_REPLICATION_PASSWORD: "replicator"
+      PG_STANDBY_NAME: "standby1"
+    volumes:
+      - pg_primary_data:/var/lib/pgsql/16/data
+    networks:
+      - pgnet
+    healthcheck:
+      test: ["CMD", "docker-entrypoint.sh", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  pg-standby:
+    build: .
+    container_name: pg-standby
+    environment:
+      PGROLE: "standby"
+      PG_REPLICATION_USER: "replicator"
+      PG_REPLICATION_PASSWORD: "replicator"
+      PG_STANDBY_NAME: "standby1"
+      PRIMARY_HOST: "pg-primary"
+      PRIMARY_PORT: "5432"
+    volumes:
+      - pg_standby_data:/var/lib/pgsql/16/data
+    networks:
+      - pgnet
+    depends_on:
+      pg-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "docker-entrypoint.sh", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 5
+
+volumes:
+  pg_primary_data:
+  pg_standby_data:
+
+networks:
+  pgnet:
+    driver: bridge
+
