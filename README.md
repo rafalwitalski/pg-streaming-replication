@@ -70,3 +70,11 @@ docker exec -it pg-standby psql -U postgres -c "SELECT status, sender_host, writ
 - The primary performs a socket-only temporary start during initialisation — no network exposure while creating the replication user
 - The standby healthcheck queries `pg_stat_wal_receiver` to verify actual WAL streaming, not just that the process is alive
 - Synchronous replication means writes on the primary will hang if the standby is unavailable — this is a deliberate durability tradeoff
+
+## Resetting the cluster
+
+```bash
+cd /vagrant && docker compose down -v && docker compose up -d
+```
+
+The `-v` flag removes named volumes, forcing PostgreSQL to reinitialise from scratch.
